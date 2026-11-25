@@ -1,0 +1,3 @@
+# Extra tools to build the standalone app (build.bat installs these)
+-r requirements.txt
+pyinstaller>=6.10

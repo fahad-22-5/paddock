@@ -1,0 +1,12 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Your settings and runtime data (pairing tokens, certificates, notes, logs, icon cache)
+config.json
+data/
+
+# Build output
+build/
+dist/

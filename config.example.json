@@ -1,0 +1,112 @@
+{
+  "server": {
+    "port": 8765,
+    "setup_port": 8766,
+    "bind": "auto",
+    "https": true,
+    "hostname": "paddock"
+  },
+  "appearance": {
+    "accent": "#0a84ff"
+  },
+  "media": {
+    "online_art": true
+  },
+  "weather": {
+    "enabled": true,
+    "name": "",
+    "latitude": null,
+    "longitude": null,
+    "units": "celsius"
+  },
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "items": [
+        {"id": "home-clock", "kind": "widget", "type": "clock", "w": 4, "h": 2},
+        {"id": "home-media", "kind": "widget", "type": "media", "w": 4, "h": 2},
+        {"id": "home-system", "kind": "widget", "type": "system", "w": 8, "h": 2}
+      ]
+    },
+    {
+      "id": "media",
+      "title": "Media",
+      "items": [
+        {"id": "media-player", "kind": "widget", "type": "media", "w": 5, "h": 4},
+        {"id": "media-volume", "kind": "widget", "type": "volume", "w": 3, "h": 4}
+      ]
+    },
+    {
+      "id": "launcher",
+      "title": "Launcher",
+      "items": [
+        {"id": "t-explorer", "kind": "action", "action": "explorer"},
+        {"id": "t-edge", "kind": "action", "action": "edge"},
+        {"id": "t-terminal", "kind": "action", "action": "terminal"},
+        {"id": "t-notepad", "kind": "action", "action": "notepad"},
+        {"id": "t-calc", "kind": "action", "action": "calculator"},
+        {"id": "t-taskmgr", "kind": "action", "action": "taskmgr"},
+        {"id": "t-settings", "kind": "action", "action": "settings"},
+        {"id": "t-downloads", "kind": "action", "action": "downloads"},
+        {"id": "t-youtube", "kind": "action", "action": "youtube"},
+        {"id": "t-github", "kind": "action", "action": "github"}
+      ]
+    },
+    {
+      "id": "macros",
+      "title": "Macros",
+      "items": [
+        {"id": "m-teams", "kind": "action", "action": "teams-mute"},
+        {"id": "m-snip", "kind": "action", "action": "snip"},
+        {"id": "m-desktop", "kind": "action", "action": "show-desktop"},
+        {"id": "m-taskview", "kind": "action", "action": "task-view"},
+        {"id": "m-emoji", "kind": "action", "action": "emoji"},
+        {"id": "m-copy", "kind": "action", "action": "copy"},
+        {"id": "m-paste", "kind": "action", "action": "paste"},
+        {"id": "m-playpause", "kind": "action", "action": "play-pause-key"},
+        {"id": "m-sig", "kind": "action", "action": "signature"},
+        {"id": "m-clip", "kind": "widget", "type": "clipboard", "w": 4, "h": 2}
+      ]
+    },
+    {
+      "id": "desk",
+      "title": "Desk",
+      "items": [
+        {"id": "desk-notes", "kind": "widget", "type": "notes", "w": 5, "h": 4},
+        {"id": "desk-power", "kind": "widget", "type": "power", "w": 3, "h": 2},
+        {"id": "desk-clip", "kind": "widget", "type": "clipboard", "w": 3, "h": 2}
+      ]
+    },
+    {
+      "id": "touchpad",
+      "title": "Touchpad",
+      "items": [
+        {"id": "pad", "kind": "widget", "type": "touchpad", "w": 8, "h": 4}
+      ]
+    }
+  ],
+  "actions": {
+    "explorer": {"type": "exe", "label": "File Explorer", "path": "%SystemRoot%\\explorer.exe"},
+    "edge": {"type": "exe", "label": "Edge", "path": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"},
+    "terminal": {"type": "shell", "label": "Terminal", "command": "start \"\" wt.exe", "icon": "%SystemRoot%\\System32\\cmd.exe"},
+    "notepad": {"type": "exe", "label": "Notepad", "path": "notepad.exe", "icon": "%SystemRoot%\\System32\\notepad.exe"},
+    "calculator": {"type": "exe", "label": "Calculator", "path": "calc.exe", "icon": "🧮"},
+    "taskmgr": {"type": "exe", "label": "Task Manager", "path": "%SystemRoot%\\System32\\Taskmgr.exe"},
+    "settings": {"type": "url", "label": "Settings", "url": "ms-settings:", "icon": "⚙️"},
+    "downloads": {"type": "folder", "label": "Downloads", "path": "%USERPROFILE%\\Downloads"},
+    "youtube": {"type": "url", "label": "YouTube", "url": "https://www.youtube.com", "icon": "▶️", "color": "#ff0033"},
+    "github": {"type": "url", "label": "GitHub", "url": "https://github.com", "icon": "🐙", "color": "#24292f"},
+
+    "teams-mute": {"type": "keys", "label": "Mute Teams", "keys": "ctrl+shift+m", "icon": "🎙️", "color": "#5b5fc7"},
+    "snip": {"type": "keys", "label": "Screenshot", "keys": "win+shift+s", "icon": "✂️"},
+    "show-desktop": {"type": "keys", "label": "Show desktop", "keys": "win+d", "icon": "🖥️"},
+    "task-view": {"type": "keys", "label": "Task view", "keys": "win+tab", "icon": "🗂️"},
+    "emoji": {"type": "keys", "label": "Emoji", "keys": "win+.", "icon": "😀"},
+    "copy": {"type": "keys", "label": "Copy", "keys": "ctrl+c", "icon": "📋"},
+    "paste": {"type": "keys", "label": "Paste", "keys": "ctrl+v", "icon": "📥"},
+    "play-pause-key": {"type": "keys", "label": "Play / Pause", "keys": "media_play_pause", "icon": "⏯️"},
+    "signature": {"type": "text", "label": "Signature", "text": "Best regards,\nYour Name", "icon": "✍️"},
+    "open-notepad-macro": {"type": "steps", "label": "Notepad via Run", "icon": "📝", "steps": [{"keys": "win+r"}, {"delay": 0.5}, {"text": "notepad"}, {"keys": "enter"}]}
+  }
+}

@@ -1,0 +1,22 @@
+# PadDock server (Windows 10/11, Python 3.10+). Installed by setup.bat into .venv
+fastapi>=0.115
+uvicorn[standard]>=0.30
+psutil>=6.0
+# Volume (Windows Core Audio)
+pycaw>=20240316
+comtypes>=1.4
+# Now playing (Windows Global System Media Transport Controls)
+winrt-runtime>=2.0
+winrt-Windows.Foundation>=2.0
+winrt-Windows.Foundation.Collections>=2.0
+winrt-Windows.Media.Control>=2.0
+winrt-Windows.Storage.Streams>=2.0
+# Keyboard macros
+pynput>=1.7.7
+# Tray icon, icons, QR code, HTTPS certificates
+pystray>=0.19
+Pillow>=10.0
+qrcode>=7.4
+cryptography>=42.0
+# paddock.local name on the network (mDNS / Bonjour)
+zeroconf>=0.132

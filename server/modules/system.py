@@ -134,7 +134,10 @@ class SystemModule(Module):
             self._disks = self._read_disks()
             self._disks_at = now
         mem = psutil.virtual_memory()
-        freq = psutil.cpu_freq()
+        try:  # not available on Apple Silicon Macs
+            freq = psutil.cpu_freq() if hasattr(psutil, "cpu_freq") else None
+        except (OSError, NotImplementedError, RuntimeError):
+            freq = None
         return {
             "t": time.time(),
             "cpu": psutil.cpu_percent(None),

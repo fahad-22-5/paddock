@@ -411,6 +411,24 @@ def test_mac_keyboard_without_pc_keys():
         macros._TABLE = None
 
 
+def test_long_hostname_certificate():
+    """Some Macs (and CI machines) have host names longer than X.509's 64-character limit."""
+    import socket
+
+    from cryptography import x509
+
+    from server import certs, mdns
+
+    tmp = Path(tempfile.mkdtemp())
+    long_name = "Mac-1764240000123456789-runner-very-long-hostname-for-ci.ip6.arpa.local"
+    with patched(socket, "gethostname", lambda: long_name), patched(certs, "CERT_DIR", tmp),             patched(certs, "CA_KEY", tmp / "ca.key"), patched(certs, "CA_CERT", tmp / "ca.crt"),             patched(certs, "SERVER_KEY", tmp / "s.key"), patched(certs, "SERVER_CERT", tmp / "s.crt"):
+        certs.ensure_certs(["192.168.1.20"], ["paddock.local"])
+        ca = x509.load_pem_x509_certificate((tmp / "ca.crt").read_bytes())
+        cn = ca.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)[0].value
+        assert len(cn) <= 64 and cn.startswith("PadDock Local CA ("), cn
+        assert len(mdns.service_name().encode()) <= 63
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     failed = 0

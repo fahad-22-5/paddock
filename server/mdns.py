@@ -18,6 +18,14 @@ NAME_RE = re.compile(r"^[a-z0-9]([a-z0-9-]{0,30}[a-z0-9])?$")
 DEFAULT_NAME = "paddock"
 
 
+def service_name() -> str:
+    """The Bonjour service instance name (max 63 bytes)."""
+    name = f"PadDock on {socket.gethostname().removesuffix('.local')}"
+    while len(name.encode("utf-8")) > 63:
+        name = name[:-1]
+    return name
+
+
 def clean_hostname(value: object) -> str:
     name = str(value or DEFAULT_NAME).strip().lower().removesuffix(".local")
     return name if NAME_RE.match(name) else DEFAULT_NAME
@@ -41,7 +49,7 @@ class NameAnnouncer:
             return False
         stype = "_https._tcp.local." if https else "_http._tcp.local."
         info = ServiceInfo(
-            stype, f"PadDock on {socket.gethostname()}.{stype}",
+            stype, f"{service_name()}.{stype}",
             addresses=[socket.inet_aton(ip)], port=port, server=f"{hostname}.local.",
             properties={"path": "/", "app": "PadDock"},
         )
@@ -71,7 +79,7 @@ class NameAnnouncer:
         stype = "_https._tcp" if https else "_http._tcp"
         try:
             self._proc = subprocess.Popen(
-                [exe, "-P", f"PadDock on {socket.gethostname().removesuffix('.local')}", stype, "local",
+                [exe, "-P", service_name(), stype, "local",
                  str(port), f"{hostname}.local", ip, "path=/", "app=PadDock"],
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except OSError as e:

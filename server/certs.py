@@ -33,6 +33,14 @@ LEAF_DAYS = 397
 RENEW_BEFORE_DAYS = 30
 
 
+def _cn(prefix: str, suffix: str = "") -> str:
+    """A certificate common name with this PC's name, cut to fit X.509's 64-character limit
+    (some Macs and CI machines have very long host names)."""
+    host = socket.gethostname().removesuffix(".local")
+    room = 64 - len(prefix) - len(suffix)
+    return f"{prefix}{host[:room]}{suffix}"
+
+
 def _now() -> dt.datetime:
     return dt.datetime.now(dt.timezone.utc)
 
@@ -49,7 +57,7 @@ def _ensure_ca():
         return key, x509.load_pem_x509_certificate(CA_CERT.read_bytes())
     key = ec.generate_private_key(ec.SECP256R1())
     name = x509.Name([
-        x509.NameAttribute(NameOID.COMMON_NAME, f"PadDock Local CA ({socket.gethostname()})"),
+        x509.NameAttribute(NameOID.COMMON_NAME, _cn("PadDock Local CA (", ")")),
         x509.NameAttribute(NameOID.ORGANIZATION_NAME, "PadDock"),
     ])
     cert = (
@@ -109,7 +117,7 @@ def ensure_certs(ips: list[str], extra_names: list[str] | tuple = ()) -> tuple[P
     san = [x509.DNSName(n) for n in names] + [x509.IPAddress(ipaddress.ip_address(i)) for i in ips]
     cert = (
         x509.CertificateBuilder()
-        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, f"PadDock on {host}")]))
+        .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, _cn("PadDock on "))]))
         .issuer_name(ca_cert.subject)
         .public_key(key.public_key())
         .serial_number(x509.random_serial_number())

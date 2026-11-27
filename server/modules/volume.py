@@ -76,6 +76,14 @@ class VolumeModule(Module):
         return groups
 
     def _read(self) -> dict:
+        try:
+            return self._read_unsafe()
+        except ActionError:
+            raise
+        except Exception as e:  # e.g. COM errors on a PC without an audio device
+            raise ActionError(f"Couldn't read the volume: {e}")
+
+    def _read_unsafe(self) -> dict:
         dev = self._endpoint()
         ev = dev.EndpointVolume
         apps = []

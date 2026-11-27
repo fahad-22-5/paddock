@@ -2,7 +2,7 @@
 import { h, icon } from '/ui/js/core/dom.js';
 import { confirmDialog, toast, toastError } from '/ui/js/core/ui.js';
 import { api, store } from '../api.js';
-import { card, head } from './common.js';
+import { card, head, isMac, trayWord } from './common.js';
 
 const SWATCHES = ['#0a84ff', '#5e5ce6', '#bf5af2', '#ff375f', '#ff9f0a', '#ffd60a', '#30d158', '#64d2ff', '#ac8e68', '#8e8e93'];
 
@@ -38,14 +38,14 @@ export default {
 
     // Album art
     const artOn = h('input', { type: 'checkbox', class: 'switch', checked: c.media?.online_art !== false });
-    artOn.onchange = () => set({ online_art: artOn.checked }, artOn.checked ? 'Sharp album art lookup is on.' : 'Album art now comes only from Windows.');
+    artOn.onchange = () => set({ online_art: artOn.checked }, artOn.checked ? 'Sharp album art lookup is on.' : 'Album art now comes only from the music app.');
 
     // Startup
     const auto = h('input', { type: 'checkbox', class: 'switch', checked: data.autostart });
     auto.onchange = async () => {
       try {
         const r = await api('POST', '/autostart', { enabled: auto.checked });
-        toast(r.enabled ? 'PadDock will start (with its tray icon) when you log in.' : 'PadDock won’t start at login any more.');
+        toast(r.enabled ? `PadDock will start (with its ${trayWord()}) when you log in.` : 'PadDock won’t start at login any more.');
         await store.load();
       } catch (e) { toastError(e); auto.checked = !auto.checked; }
     };
@@ -88,10 +88,10 @@ export default {
           h('div', { class: 'c-muted' }, w.name ? `Now showing: ${w.name}` : 'No city set yet.')),
         card('Album art', 'music',
           h('label', { class: 'c-row' }, h('div', { class: 'c-grow' }, h('b', null, 'Look up sharp covers online'),
-            h('div', { class: 'c-muted' }, 'Some players (like YouTube Music in Chrome) only give Windows a tiny thumbnail. PadDock can fetch the matching full-size cover from the iTunes Search API. This sends the song title and artist to Apple.')), artOn)),
+            h('div', { class: 'c-muted' }, 'Some players (like YouTube Music in Chrome) only share a tiny thumbnail. PadDock can fetch the matching full-size cover from the iTunes Search API. This sends the song title and artist to Apple.')), artOn)),
         card('Startup', 'power',
           h('label', { class: 'c-row' }, h('div', { class: 'c-grow' }, h('b', null, 'Start PadDock when I log in'),
-            h('div', { class: 'c-muted' }, 'Runs in the background with a tray icon (Startup folder shortcut, no admin needed).')), auto))),
+            h('div', { class: 'c-muted' }, isMac() ? 'Runs in the background with a menu bar icon (a LaunchAgent, no admin needed).' : 'Runs in the background with a tray icon (Startup folder shortcut, no admin needed).')), auto))),
       h('div', { class: 'c-section-title' }, 'Server'),
       h('section', { class: 'c-card wide' },
         h('div', { class: 'c-form' },

@@ -61,7 +61,7 @@ function noKey(message) {
     h('img', { src: '/ui/icons/icon-192.png', alt: '' }),
     h('h1', null, 'PadDock Console'),
     h('p', null, message),
-    h('p', { class: 'hint' }, 'Right-click the PadDock tray icon and choose “Open PadDock console”, or double-click console.bat in the PadDock folder.'))));
+    h('p', { class: 'hint' }, 'Click the PadDock tray icon (Windows) or menu bar icon (Mac) and choose “Open PadDock console”, or run console.bat / ./console.sh in the PadDock folder.'))));
 }
 
 async function start() {

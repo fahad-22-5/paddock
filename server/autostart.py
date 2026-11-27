@@ -1,18 +1,22 @@
-"""Start PadDock at login with a shortcut in your Startup folder (no admin rights needed).
+"""Start PadDock at login (no admin rights needed).
 
-Installed app: the shortcut runs PadDock.exe. From source: the venv's pythonw.exe with
-run.py --tray. You can also delete it by hand: Win+R, shell:startup, remove PadDock.lnk.
+Windows: a shortcut in your Startup folder (Win+R → shell:startup → PadDock.lnk).
+macOS:   a LaunchAgent, ~/Library/LaunchAgents/com.paddock.server.plist.
+Installed app: runs PadDock.exe / PadDock.app. From source: the venv's Python with run.py --tray.
 """
 from __future__ import annotations
 
 import os
+import plistlib
 import subprocess
 import sys
 from pathlib import Path
 
-from .paths import APP_DIR, FROZEN, INSTALL_DIR
+from .paths import APP_DIR, FROZEN, INSTALL_DIR, LOG_PATH
+from .platform import IS_MAC
 
 SHORTCUT_NAME = "PadDock.lnk"
+MAC_LABEL = "com.paddock.server"
 
 
 def startup_dir() -> Path:
@@ -20,6 +24,8 @@ def startup_dir() -> Path:
 
 
 def shortcut_path() -> Path:
+    if IS_MAC:
+        return Path.home() / "Library" / "LaunchAgents" / f"{MAC_LABEL}.plist"
     return startup_dir() / SHORTCUT_NAME
 
 
@@ -52,7 +58,7 @@ def make_shortcut(lnk: Path, target: Path, args: str = "", workdir: Path | None 
 
 
 def launch_command() -> tuple[Path, str, Path, Path]:
-    """(target, arguments, working folder, icon) that start PadDock in the background."""
+    """(target, arguments, working folder, icon) that start PadDock in the background (Windows)."""
     if FROZEN:
         exe = INSTALL_DIR / "PadDock.exe"
         return exe, "--tray", INSTALL_DIR, exe
@@ -61,7 +67,33 @@ def launch_command() -> tuple[Path, str, Path, Path]:
     return target, f'"{APP_DIR / "run.py"}" --tray', APP_DIR, APP_DIR / "web" / "icons" / "paddock.ico"
 
 
+def mac_launch_agent() -> dict:
+    """The LaunchAgent that starts PadDock at login on macOS."""
+    if FROZEN:
+        program = [sys.executable, "--tray"]  # …/PadDock.app/Contents/MacOS/PadDock
+        workdir = str(INSTALL_DIR)
+    else:
+        program = [sys.executable, str(APP_DIR / "run.py"), "--tray"]
+        workdir = str(APP_DIR)
+    return {
+        "Label": MAC_LABEL,
+        "ProgramArguments": program,
+        "WorkingDirectory": workdir,
+        "RunAtLoad": True,
+        "KeepAlive": False,
+        "ProcessType": "Interactive",
+        "StandardOutPath": str(LOG_PATH.with_suffix(".out.log")),
+        "StandardErrorPath": str(LOG_PATH.with_suffix(".out.log")),
+    }
+
+
 def enable() -> Path:
+    if IS_MAC:
+        path = shortcut_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "wb") as f:
+            plistlib.dump(mac_launch_agent(), f)
+        return path  # takes effect at the next login
     target, args, workdir, icon = launch_command()
     return make_shortcut(shortcut_path(), target, args, workdir, icon, "PadDock dock server")
 

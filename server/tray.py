@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import sys
 import threading
 import webbrowser
 from typing import Callable
@@ -16,7 +17,16 @@ log = logging.getLogger("paddock.tray")
 
 
 def start_tray(get_state: Callable[[], dict], on_quit: Callable[[], None]):
-    """Run the tray icon on its own thread. Returns the pystray Icon (or None)."""
+    """Windows: run the tray icon on its own thread. Returns the pystray Icon (or None)."""
+    icon = build_icon(get_state, on_quit)
+    if icon is not None:
+        threading.Thread(target=icon.run, name="tray", daemon=True).start()
+    return icon
+
+
+def build_icon(get_state: Callable[[], dict], on_quit: Callable[[], None]):
+    """The tray (Windows) / menu bar (macOS) icon with PadDock's menu, not yet running.
+    On macOS, icon.run() must be called on the main thread."""
     try:
         import pystray
     except Exception as e:  # pragma: no cover
@@ -45,7 +55,5 @@ def start_tray(get_state: Callable[[], dict], on_quit: Callable[[], None]):
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Quit PadDock", quit_),
     )
-    image = Image.open(WEB_DIR / "icons" / "icon-192.png")
-    icon = pystray.Icon("PadDock", image, "PadDock", menu)
-    threading.Thread(target=icon.run, name="tray", daemon=True).start()
-    return icon
+    image = Image.open(WEB_DIR / "icons" / ("menubar.png" if sys.platform == "darwin" else "icon-192.png"))
+    return pystray.Icon("PadDock", image, "PadDock", menu)

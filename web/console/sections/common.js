@@ -1,6 +1,10 @@
 // Helpers shared by the console sections.
 import { h, icon } from '/ui/js/core/dom.js';
-import { apiImage } from '../api.js';
+import { apiImage, store } from '../api.js';
+
+/** The computer runs macOS (console wording and examples adapt). */
+export const isMac = () => store.data?.platform === 'macos';
+export const trayWord = () => (isMac() ? 'menu bar icon' : 'tray icon');
 
 export const TYPES = {
   exe: { label: 'Program or file', icon: 'app', group: 'apps' },

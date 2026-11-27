@@ -1,5 +1,5 @@
 // Console API client. Every call carries the console key (from data/console.key, handed
-// over in the URL fragment by console.bat or the tray icon).
+// over in the URL fragment by console.bat / console.sh or the tray / menu bar icon).
 const KEY_STORE = 'paddock.consoleKey';
 
 function readKey() {
@@ -27,7 +27,7 @@ export async function api(method, path, body) {
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
-    throw new ApiError('PadDock isn’t running. Start it with start.bat or start-tray.bat.', 0);
+    throw new ApiError('PadDock isn’t running. Start the PadDock app (or start.bat / ./start.sh).', 0);
   }
   const data = await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(data?.detail || `Request failed (${res.status})`, res.status);

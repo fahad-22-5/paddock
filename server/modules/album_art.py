@@ -123,3 +123,34 @@ def find_hires(title: str, artist: str, album: str, thumb: Image.Image) -> str |
     while len(_cache) > 60:
         _cache.popitem(last=False)
     return to_data_url(Image.open(io.BytesIO(found))) if found else None
+
+
+def _norm(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", _clean(text).lower())
+
+
+def find_by_name(title: str, artist: str, album: str = "") -> str | None:
+    """A cover when there's no thumbnail to compare with (Apple Music on macOS): only an
+    iTunes result whose title and artist match exactly is accepted (blocking)."""
+    key = ("byname", title.lower(), artist.lower(), album.lower())
+    if key in _cache:
+        hit = _cache[key]
+        return to_data_url(Image.open(io.BytesIO(hit))) if hit else None
+    first_artist = re.split(r",|&|\bx\b|\bfeat\.?|\bft\.?|\band\b", artist, flags=re.I)[0].strip()
+    found = None
+    try:
+        q = urllib.parse.urlencode({"term": f"{first_artist} {_clean(title)}"[:120], "media": "music", "entity": "song", "limit": 10})
+        for r in json.loads(_get(f"https://itunes.apple.com/search?{q}")).get("results", []):
+            if _norm(r.get("trackName", "")) == _norm(title) and _norm(first_artist) in _norm(r.get("artistName", "")):
+                if album and r.get("collectionName") and _norm(album) != _norm(r["collectionName"]):
+                    continue
+                art = r.get("artworkUrl100")
+                if art:
+                    found = _get(re.sub(r"/\d+x\d+bb\.(jpg|png)$", f"/{HIRES}x{HIRES}bb.jpg", art))
+                    break
+    except Exception as e:
+        log.debug("iTunes lookup failed: %s", e)
+    _cache[key] = found
+    while len(_cache) > 60:
+        _cache.popitem(last=False)
+    return to_data_url(Image.open(io.BytesIO(found))) if found else None

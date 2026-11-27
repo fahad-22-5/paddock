@@ -6,6 +6,7 @@ import asyncio
 import os
 import shutil
 import subprocess
+import sys
 import threading
 import time
 
@@ -80,7 +81,12 @@ class SystemModule(Module):
     async def start(self) -> None:
         psutil.cpu_percent(None)
         psutil.cpu_percent(None, percpu=True)
-        self.gpu = NvidiaSmi()
+        if sys.platform == "darwin":
+            from .mac.gpu import MacGpu
+
+            self.gpu = MacGpu()
+        else:
+            self.gpu = NvidiaSmi()
         self._net = psutil.net_io_counters()
         self._dio = psutil.disk_io_counters()
         self._t = time.monotonic()
@@ -95,13 +101,20 @@ class SystemModule(Module):
     def _read_disks(self) -> list[dict]:
         out = []
         for p in psutil.disk_partitions(all=False):
-            if "cdrom" in p.opts or not p.fstype or "fixed" not in p.opts:
+            if sys.platform == "darwin":
+                # The startup disk and external drives; skip macOS system/sealed volumes.
+                if p.mountpoint != "/" and not p.mountpoint.startswith("/Volumes/"):
+                    continue
+            elif "cdrom" in p.opts or not p.fstype or "fixed" not in p.opts:
                 continue
             try:
                 u = psutil.disk_usage(p.mountpoint)
             except OSError:
                 continue
-            out.append({"mount": p.mountpoint.rstrip("\\"), "used": u.used, "total": u.total, "percent": u.percent})
+            mount = p.mountpoint.rstrip("\\")
+            if sys.platform == "darwin":
+                mount = "Macintosh HD" if p.mountpoint == "/" else p.mountpoint.removeprefix("/Volumes/")
+            out.append({"mount": mount, "used": u.used, "total": u.total, "percent": u.percent})
         return out
 
     def _sample_sync(self) -> dict:

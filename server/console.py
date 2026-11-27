@@ -20,13 +20,13 @@ import subprocess
 import threading
 import time
 import uuid
-from ctypes import wintypes
 from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 
 from . import __version__, autostart
+from .platform import IS_MAC, NAME as PLATFORM, WORDS, open_path
 from .modules.actions import icon_source
 from .modules.base import ActionError
 from .modules.core import HEX_RE, clean_pages
@@ -301,6 +301,7 @@ def create_console_router(dock: "PadDock") -> APIRouter:
             "setup_url": s["setup_url"], "https": s["https"],
             "host": s["host"], "version": __version__, "started": dock.started,
             "autostart": autostart.is_enabled(),
+            "platform": PLATFORM, "words": WORDS,
             "config_path": str(CONFIG_PATH), "data_dir": str(DATA_DIR),
         }
 
@@ -372,6 +373,10 @@ def create_console_router(dock: "PadDock") -> APIRouter:
     async def pick(body: dict):
         kind = body.get("kind") if body.get("kind") in ("file", "folder", "icon") else "file"
         try:
+            if IS_MAC:
+                from .modules.mac.apps import pick as mac_pick
+
+                return {"path": await asyncio.to_thread(mac_pick, kind, body.get("initial"))}
             return {"path": await asyncio.to_thread(_pick, kind, body.get("initial"))}
         except ActionError as e:
             bad(e)
@@ -380,13 +385,18 @@ def create_console_router(dock: "PadDock") -> APIRouter:
     async def apps(refresh: bool = False):
         global _apps_cache
         if refresh or not _apps_cache or time.time() - _apps_cache[0] > 600:
-            _apps_cache = (time.time(), await asyncio.to_thread(_installed_apps))
+            if IS_MAC:
+                from .modules.mac.apps import installed_apps as mac_apps
+
+                _apps_cache = (time.time(), await asyncio.to_thread(mac_apps))
+            else:
+                _apps_cache = (time.time(), await asyncio.to_thread(_installed_apps))
         return _apps_cache[1]
 
     async def _png(src: str | None, index: int = 0):
         if not src:
             return Response(status_code=404)
-        from .winicons import extract_png
+        from .icons import extract_png
 
         png = await asyncio.to_thread(extract_png, src, index, 128)
         if not png:
@@ -493,7 +503,7 @@ def create_console_router(dock: "PadDock") -> APIRouter:
         target = {"config": CONFIG_PATH, "data": DATA_DIR, "log": LOG_PATH}.get(body.get("what"))
         if target is None or not target.exists():
             raise HTTPException(404, "Not found.")
-        os.startfile(target)  # noqa: S606 - opens the user's own file in its default app
+        open_path(target)
         return True
 
     @r.post("/restart")

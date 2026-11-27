@@ -99,6 +99,12 @@ class Module:
                     last = data
             except asyncio.CancelledError:
                 raise
+            except ActionError as e:
+                # An expected situation (e.g. no audio device): one line, not a traceback.
+                if str(e) != getattr(self, "_last_poll_error", None):
+                    self.log.warning("%s: %s", topic, e)
+                    self._last_poll_error = str(e)
+                await asyncio.sleep(5)
             except Exception:
                 self.log.exception("sampling %s failed", topic)
                 await asyncio.sleep(5)

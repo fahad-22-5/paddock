@@ -58,6 +58,9 @@ def main() -> None:
     draw_icon(180, rounded=False).convert("RGB").save(OUT / "apple-touch-icon.png")
     draw_icon(256).save(OUT / "paddock.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
     draw_icon(64).save(OUT / "favicon.png")
+    # macOS: menu bar icon (22 pt @2x) and the app icon
+    draw_icon(44).save(OUT / "menubar.png")
+    draw_icon(1024).save(OUT / "paddock.icns", sizes=[(16, 16), (32, 32), (64, 64), (128, 128), (256, 256), (512, 512), (1024, 1024)])
     print("Icons written to", OUT)
 
 

@@ -10,10 +10,17 @@ master and per-app volume, an app launcher, keyboard macros and text snippets, a
 clipboard bridge, a clock with weather, quick notes, power actions, and a touchpad mode.
 You can swipe between pages, rearrange tiles in an edit mode and pick an accent colour.
 
-**Two ways to run it on the PC:**
-- **The app (recommended):** run `PadDock-Setup-<version>.exe`. You don't need Python.
-  See [Install the app](#0-install-the-app).
-- **From source:** `setup.bat`, then `start.bat`. See [Set up the PC](#1-set-up-the-pc).
+PadDock runs on **Windows 10/11** and **macOS 13+**. The dock itself works in Safari or
+Chrome on any tablet or phone.
+
+**Ways to run it on the computer:**
+- **Windows app (recommended):** run `PadDock-Setup-<version>.exe`. You don't need
+  Python. See [Install the app](#0-install-the-app).
+- **Windows from source:** `setup.bat`, then `start.bat`. See
+  [Set up the PC](#1-set-up-the-pc).
+- **Mac:** `PadDock.app`, or `./setup.sh` and `./start.sh` from source. **New to
+  PadDock on a Mac? Start with the step-by-step [Mac guide](README-macOS.md).**
+  Technical details are under [macOS](#macos) below.
 
 ---
 
@@ -53,6 +60,71 @@ Using the app:
 - `PADDOCK_HOME` (environment variable) moves the settings folder elsewhere.
   `PadDock-Setup.exe --silent [--dir PATH] [--no-autostart] [--no-desktop] [--no-launch]`
   installs without the window.
+
+## macOS
+
+PadDock runs on a Mac with the same dock, console, pairing and HTTPS setup as on Windows.
+The device setup (certificate, Home Screen) is the same.
+
+### From source
+
+1. Install Python 3.10 or newer: `brew install python` ([brew.sh](https://brew.sh)), or the
+   installer from python.org. The `python3` that comes with Xcode is too old.
+2. In Terminal, in the PadDock folder, run `./setup.sh`. It creates `.venv`, installs the
+   dependencies and creates `config.json` with Mac shortcuts.
+3. Then use:
+   - `./start.sh`: runs in Terminal and shows the address, pairing code and QR code
+   - `./start-tray.sh`: runs in the background with a menu bar icon
+   - `./console.sh`: opens the management console
+
+### The app
+
+- Build it on a Mac with **`./build.sh`**. It creates `dist/PadDock-<version>-macos.dmg`
+  and a `.zip` of `PadDock.app`. PyInstaller can't build Mac apps on Windows.
+  - Or download it from GitHub: every push builds it in the **Actions** tab, in the
+    **PadDock-macos** artifact.
+- Open the `.dmg` and drag **PadDock** to Applications.
+- The app isn't signed with an Apple developer ID, so the first time, right-click
+  PadDock → **Open** → **Open**. Or allow it under *System Settings → Privacy & Security
+  → Open Anyway*.
+- It lives in the **menu bar**, with no Dock icon. Click the icon for the console and the
+  pairing code.
+- Settings live in `~/Library/Application Support/PadDock`.
+- **Start at login** is in the console (*Settings*) or the menu bar menu. It adds
+  `~/Library/LaunchAgents/com.paddock.server.plist`.
+- To remove PadDock, quit it from the menu bar and move it to the Trash. To delete its
+  settings too, delete the folder above.
+
+### Permissions macOS asks for
+
+| Prompt | Why | Where to fix it later |
+| --- | --- | --- |
+| "Accept incoming network connections?" | The dock connects to the Mac | *System Settings → Network → Firewall → Options* |
+| **Accessibility** | Keyboard shortcuts, text snippets, the touchpad and Lock | *System Settings → Privacy & Security → Accessibility*: switch on PadDock (or Terminal / Python when running from source) |
+| "PadDock wants to control Spotify / Music / System Events" | Now playing, and restart/shut down | *System Settings → Privacy & Security → Automation* |
+
+### What's different on a Mac
+
+| Feature | On macOS |
+| --- | --- |
+| Now playing | Spotify and Apple Music work out of the box (AppleScript). For **every** app, including browsers, run `brew install media-control`. PadDock uses it automatically. |
+| Volume | Master volume and mute. macOS has no per-app volume without a third-party audio driver, and the dock says so. |
+| System monitor | CPU, memory, disks, network and GPU load. GPU temperature isn't available without admin rights, so it shows "n/a". |
+| Launcher | Apps (by bundle id like `com.apple.Safari`, or a path to an `.app`), files, folders, links and shell commands (zsh). *Add installed app* lists your Applications folders. |
+| Keyboard shortcuts | Use `cmd` (or `win`, which means the same). `option` = `alt`. |
+| Lock / Sleep | Lock presses Ctrl+Cmd+Q, the macOS lock shortcut. Sleep uses `pmset sleepnow`. |
+| Restart / Shut down | PadDock waits 15 seconds, which you can cancel from the dock, then asks macOS. Apps may ask to save documents. |
+| `paddock.local` | Announced with the Mac's built-in Bonjour. |
+
+Example Mac shortcuts for `config.json` (see `config.example.macos.json`):
+
+```jsonc
+"safari":   {"type": "app", "label": "Safari", "appid": "com.apple.Safari"},
+"code":     {"type": "app", "label": "VS Code", "appid": "/Applications/Visual Studio Code.app"},
+"dl":       {"type": "folder", "label": "Downloads", "path": "~/Downloads"},
+"shot":     {"type": "keys", "label": "Screenshot", "keys": "cmd+shift+4"},
+"flushdns": {"type": "shell", "label": "Flush DNS", "command": "dscacheutil -flushcache", "window": true}
+```
 
 ## 1. Set up the PC
 
@@ -297,6 +369,7 @@ server/                 Python (FastAPI + Uvicorn)
   hub.py                WebSocket clients, topics, message protocol
   security.py           pairing codes and device tokens
   certs.py              local HTTPS certificate authority
+  platform.py           Windows/macOS differences (paths, dialogs, opening files)
   setup_site.py         plain-HTTP setup page and certificate download (port 8766)
   console.py            the PC console API (loopback only, needs the console key)
   tray.py, autostart.py tray icon and start at login
@@ -308,6 +381,8 @@ server/                 Python (FastAPI + Uvicorn)
     launcher.py         exe / url / folder / shell actions
     macros.py           keyboard shortcuts and text snippets
     system.py media.py volume.py weather.py notes.py clipboard.py power.py touchpad.py
+    mac/                macOS versions: launcher, media, volume, clipboard, power, touchpad,
+                        gpu (ioreg), icons, installed apps; picked automatically on a Mac
 web/                    the device app (plain ES modules, no build step)
   index.html  manifest.webmanifest  sw.js  css/app.css  icons/
   js/main.js            entry point
@@ -318,7 +393,12 @@ web/                    the device app (plain ES modules, no build step)
   console/              the PC console (index.html, console.js, sections/)
 config.example.json     default layout and sample shortcuts
 installer/setup.py      the installer (PadDock-Setup.exe)
-tools/build.py          builds the app and installer with PyInstaller (build.bat)
+tools/build.py          builds the app with PyInstaller: Windows installer or Mac .app/.dmg
+tools/smoke_test.py     end-to-end test: starts PadDock, pairs, checks API/console/topics
+tests/                  logic tests for the macOS modules (run on any system)
+.github/workflows/      GitHub Actions: tests and builds on Windows and macOS for every push
+setup.sh start.sh …     macOS equivalents of the .bat scripts
+config.example.macos.json  default layout with Mac shortcuts
 ```
 
 ### Adding a widget

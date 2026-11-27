@@ -151,7 +151,7 @@ class VolumeModule(Module):
                 return Response(status_code=404)
             import asyncio
 
-            from ..winicons import extract_png
+            from ..icons import extract_png
 
             png = await asyncio.to_thread(extract_png, path, 0, 96)
             if not png:

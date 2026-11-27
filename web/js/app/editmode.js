@@ -199,11 +199,13 @@ export function describe(a) {
 }
 
 // ---- shortcuts created from the device ---------------------------------------
-const KEY_EXAMPLES = ['ctrl+shift+m', 'win+shift+s', 'ctrl+c', 'alt+tab', 'win+d', 'media_play_pause', 'ctrl+alt+delete'];
+const KEY_EXAMPLES = ['ctrl+shift+m', 'win+shift+s', 'ctrl+c', 'alt+tab', 'win+d', 'media_play_pause', 'ctrl+shift+esc'];
+const KEY_EXAMPLES_MAC = ['cmd+shift+m', 'cmd+shift+4', 'cmd+c', 'cmd+tab', 'ctrl+up', 'media_play_pause', 'cmd+space'];
 
 export function openActionForm(shell, pageId, editId = null) {
   const existing = editId ? shell.config.actions[editId] : null;
   let type = existing?.type || 'keys';
+  const mac = shell.conn.server?.platform === 'macos';
   const label = h('input', { class: 'field', placeholder: 'Label, e.g. Mute Teams', value: existing?.label || '', maxlength: 40 });
   const value = h('textarea', { class: 'field', rows: 3 });
   const emoji = h('input', { class: 'field', placeholder: 'Icon: an emoji (optional)', value: existing?.icon || '', maxlength: 8, style: { width: '100%' } });
@@ -223,11 +225,11 @@ export function openActionForm(shell, pageId, editId = null) {
     value.rows = type === 'text' ? 5 : 1;
     value.placeholder = { keys: 'ctrl+shift+m', text: 'Text to type on the PC', url: 'https://…' }[type];
     hint.textContent = {
-      keys: 'Join keys with +. Modifiers: ctrl, shift, alt, win. Also f1–f24, enter, esc, tab, space, arrows, media keys. Several combos in a row: separate with a space.',
+      keys: `Join keys with +. Modifiers: ctrl, shift, alt, ${mac ? 'cmd' : 'win'}. Also f1–f24, enter, esc, tab, space, arrows, media keys. Several combos in a row: separate with a space.`,
       text: 'Typed into whatever window has focus on the PC.',
       url: 'Opens in your default browser on the PC. Only http and https links.',
     }[type];
-    examples.replaceChildren(...(type === 'keys' ? KEY_EXAMPLES.map((k) => {
+    examples.replaceChildren(...(type === 'keys' ? (mac ? KEY_EXAMPLES_MAC : KEY_EXAMPLES).map((k) => {
       const c = h('button', { class: 'chip' }, k);
       onTap(c, () => { value.value = k; });
       return c;

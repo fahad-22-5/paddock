@@ -1,4 +1,4 @@
-// Now playing (any app, via Windows media controls): art, title, artist, seek, transport.
+// Now playing (via the computer's media controls): art, title, artist, seek, transport.
 import { h, css, icon, onTap, fmtTime } from '../core/dom.js';
 import { sheet } from '../core/ui.js';
 import { Slider } from '../ui/slider.js';
@@ -90,7 +90,7 @@ export default {
           onTap(b, () => { selected = id; ctx.saveOptions({ source: id }); ctx.call('media', 'select', { id }); close(); });
           return b;
         };
-        body.append(h('div', { class: 'list' }, row('Automatic (what Windows shows)', null), state.sessions.map((s) => row(s.name, s.id))));
+        body.append(h('div', { class: 'list' }, row('Automatic', null), state.sessions.map((s) => row(s.name, s.id))));
       });
     });
     let selected = ctx.item.options?.source || null;

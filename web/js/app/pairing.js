@@ -15,7 +15,7 @@ export const rememberDeviceName = (name) => storage.set(NAME_KEY, name);
 export async function startRepair() {
   const ok = await confirmDialog({
     title: 'Re-pair this device?',
-    message: 'Use this when the PC was reinstalled or this device keeps saying “Disconnected”. You’ll need the 6-digit code from the PC: open the PadDock console, or right-click the tray icon and choose “Show pairing code”.',
+    message: 'Use this when the PC was reinstalled or this device keeps saying “Disconnected”. You’ll need the 6-digit code from the PC: open the PadDock console, or click its tray / menu bar icon and choose “Show pairing code”.',
     confirm: 'Re-pair',
   });
   if (!ok) return;
@@ -90,7 +90,7 @@ export function showPairing(root, { reason = '' } = {}) {
     },
       h('img', { src: '/icons/icon-192.png', alt: '' }),
       h('h1', null, repairing ? 'Re-pair with your PC' : 'Pair with your PC'),
-      h('p', null, 'Enter the 6-digit code from the PadDock console on your PC, or from “Show pairing code” in its tray icon.'),
+      h('p', null, 'Enter the 6-digit code from the PadDock console on your PC, or from “Show pairing code” in its tray or menu bar icon.'),
       code,
       h('label', { class: 'hint', style: { textAlign: 'left', marginBottom: '-10px' } }, 'Device name (each device needs its own)'),
       name, error, certHint,

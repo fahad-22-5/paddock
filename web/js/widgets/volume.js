@@ -94,7 +94,11 @@ export default {
       });
       for (const k of rows.keys()) if (!seen.has(k)) rows.delete(k);
       if (nodes.length !== apps.children.length || nodes.some((n, i) => apps.children[i] !== n)) apps.replaceChildren(...nodes);
-      if (!nodes.length) apps.replaceChildren(h('div', { class: 'empty-note' }, 'No apps are playing sound.'));
+      if (!nodes.length) {
+        apps.replaceChildren(h('div', { class: 'empty-note' },
+          s.per_app === false ? 'Per-app volume isn’t available on macOS.' : 'No apps are playing sound.'));
+      }
+      master.setDisabled(!!s.fixed); // e.g. a Mac output without volume control (HDMI)
     });
   },
 };

@@ -12,6 +12,7 @@ running as administrator unless PadDock runs as administrator too.
 from __future__ import annotations
 
 import asyncio
+import sys
 import threading
 import time
 
@@ -48,8 +49,14 @@ def _key_table():
         "media_volume_up": Key.media_volume_up, "media_volume_down": Key.media_volume_down, "media_volume_mute": Key.media_volume_mute,
         "plus": KeyCode.from_char("+"), "minus": KeyCode.from_char("-"),
     }
-    for n in range(1, 25):
-        t[f"f{n}"] = KeyCode.from_vk(0x70 + n - 1)
+    if sys.platform == "win32":
+        for n in range(1, 25):
+            t[f"f{n}"] = KeyCode.from_vk(0x70 + n - 1)
+    else:
+        for n in range(1, 21):
+            if hasattr(Key, f"f{n}"):
+                t[f"f{n}"] = getattr(Key, f"f{n}")
+        t.update(option=Key.alt, opt=Key.alt, command=Key.cmd)
     return t
 
 
@@ -73,7 +80,8 @@ def parse_combo(combo: str):
         if p in _TABLE:
             keys.append(_TABLE[p])
         elif len(p) == 1 and (p.isalpha() and p.isascii() or p.isdigit()):
-            keys.append(KeyCode.from_vk(ord(p.upper())))  # layout-independent for letters/digits
+            # Windows: virtual-key codes are layout-independent. macOS uses characters.
+            keys.append(KeyCode.from_vk(ord(p.upper())) if sys.platform == "win32" else KeyCode.from_char(p))
         elif len(p) == 1:
             keys.append(KeyCode.from_char(p))
         else:

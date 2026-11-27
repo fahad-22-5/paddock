@@ -1,12 +1,14 @@
-"""Build the standalone Windows app and its installer.
+"""Build the standalone app for the system you run it on.
 
-    build.bat            (or: .venv\\Scripts\\python tools\\build.py)
-
-Output in dist\\:
+Windows:  build.bat   (or .venv\\Scripts\\python tools\\build.py)  ->  dist\\
     PadDock-Setup-<version>.exe     installer (per user, no admin rights needed)
     PadDock-<version>-portable.zip  the same app as a folder; run PadDock.exe from anywhere
+macOS:    ./build.sh  (or .venv/bin/python tools/build.py)       ->  dist/
+    PadDock-<version>-macos.dmg     drag PadDock to Applications
+    PadDock-<version>-macos.zip     the same PadDock.app, zipped
 
-Needs PyInstaller in the venv (build.bat installs it).
+PyInstaller can't cross-compile: build the Mac app on a Mac (or let GitHub Actions do it).
+Needs PyInstaller in the venv (build.bat / build.sh install it).
 """
 from __future__ import annotations
 
@@ -63,8 +65,72 @@ def pyinstaller(*args: str) -> None:
     subprocess.run(cmd, check=True, cwd=ROOT)
 
 
+def build_mac() -> None:
+    """PadDock.app: a menu bar app (no Dock icon), plus a .dmg and a .zip."""
+    import os
+    import plistlib
+
+    sep = os.pathsep
+    app_args = [
+        "--name", "PadDock", "--windowed", "--icon", str(ROOT / "web" / "icons" / "paddock.icns"),
+        "--osx-bundle-identifier", "com.paddock.app",
+        "--distpath", str(BUILD / "app"),
+        "--add-data", f"{ROOT / 'web'}{sep}web",
+        "--add-data", f"{ROOT / 'config.example.macos.json'}{sep}.",
+        "--add-data", f"{ROOT / 'config.example.json'}{sep}.",
+        "--paths", str(ROOT),
+        "--hidden-import", "pystray._darwin", "--hidden-import", "pynput.keyboard._darwin",
+        "--hidden-import", "pynput.mouse._darwin",
+    ]
+    for m in ["uvicorn", "pynput", "pystray", "server.modules.mac"]:
+        app_args += ["--collect-submodules", m]
+    for m in EXCLUDE + ["winrt", "pycaw", "comtypes", "zeroconf"]:
+        app_args += ["--exclude-module", m]
+    pyinstaller(*app_args, str(ROOT / "run.py"))
+    app = BUILD / "app" / "PadDock.app"
+
+    # Menu bar only (no Dock icon), version, and the texts macOS shows in permission prompts.
+    plist_path = app / "Contents" / "Info.plist"
+    with open(plist_path, "rb") as f:
+        info = plistlib.load(f)
+    info.update({
+        "CFBundleDisplayName": "PadDock",
+        "CFBundleShortVersionString": __version__,
+        "CFBundleVersion": __version__,
+        "LSUIElement": True,
+        "LSMinimumSystemVersion": "12.0",
+        "NSHighResolutionCapable": True,
+        "NSAppleEventsUsageDescription": "PadDock shows what Spotify and Music are playing, and restarts or shuts down the Mac when you ask from your dock.",
+        "NSLocalNetworkUsageDescription": "PadDock serves the dock to your phone or tablet on your local network.",
+    })
+    with open(plist_path, "wb") as f:
+        plistlib.dump(info, f)
+    # Re-sign ad hoc after editing Info.plist (Apple Silicon refuses unsigned apps).
+    subprocess.run(["codesign", "--force", "--deep", "--sign", "-", str(app)], check=False)
+
+    zip_path = DIST / f"PadDock-{__version__}-macos.zip"
+    zip_path.unlink(missing_ok=True)
+    subprocess.run(["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", str(app), str(zip_path)], check=True)
+
+    staging = BUILD / "dmg"
+    shutil.rmtree(staging, ignore_errors=True)
+    staging.mkdir()
+    subprocess.run(["ditto", str(app), str(staging / "PadDock.app")], check=True)
+    os.symlink("/Applications", staging / "Applications")
+    dmg = DIST / f"PadDock-{__version__}-macos.dmg"
+    dmg.unlink(missing_ok=True)
+    subprocess.run(["hdiutil", "create", "-volname", "PadDock", "-srcfolder", str(staging), "-ov", "-format", "UDZO", str(dmg)], check=True)
+    for f in (dmg, zip_path):
+        print(f"built {f}  ({f.stat().st_size / 1e6:.1f} MB)")
+
+
 def main() -> None:
     shutil.rmtree(BUILD, ignore_errors=True)
+    if sys.platform == "darwin":
+        BUILD.mkdir(parents=True)
+        DIST.mkdir(exist_ok=True)
+        build_mac()
+        return
     BUILD.mkdir(parents=True)
     DIST.mkdir(exist_ok=True)
     sep = ";"  # PyInstaller --add-data separator on Windows

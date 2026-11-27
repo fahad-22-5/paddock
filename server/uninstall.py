@@ -9,8 +9,11 @@ import ctypes
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
-import winreg
+
+if sys.platform == "win32":
+    import winreg
 from pathlib import Path
 
 from . import autostart
@@ -38,8 +41,8 @@ def _tell(text: str) -> None:
 
 
 def uninstall() -> None:
-    if not FROZEN:
-        print("Uninstall only applies to the installed app. From source, just delete the folder.")
+    if not FROZEN or sys.platform != "win32":
+        print("Uninstall only applies to the installed Windows app. On a Mac, quit PadDock and move it to the Trash.")
         return
     if not _ask("Remove PadDock from this PC?"):
         return

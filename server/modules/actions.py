@@ -28,10 +28,12 @@ ID_RE = re.compile(r"^[A-Za-z0-9_.-]{1,48}$")
 def icon_source(a: dict) -> str | None:
     """Which file to take an action's icon from, if any."""
     icon = a.get("icon")
-    if isinstance(icon, str) and re.search(r"\.(ico|png|jpe?g|exe|dll)$", icon, re.I):
+    if isinstance(icon, str) and re.search(r"\.(ico|png|jpe?g|exe|dll|app|icns)/?$", icon, re.I):
         return icon
     if not icon and a.get("type") in ICON_TYPES and a.get("path"):
         return a["path"]
+    if not icon and a.get("type") == "app" and str(a.get("appid", "")).rstrip("/").endswith(".app"):
+        return a["appid"]  # macOS app given by its path
     if not icon and a.get("type") == "shell" and isinstance(a.get("command"), str):
         exe = a["command"].strip().strip('"').split('"')[0].split(" ")[0]
         return exe if exe.lower().endswith(".exe") and os.path.isabs(exe) else None
@@ -132,7 +134,7 @@ class ActionsModule(Module):
             if cached.exists():
                 png = cached.read_bytes()
             else:
-                from ..winicons import extract_png
+                from ..icons import extract_png
 
                 png = await asyncio.to_thread(extract_png, src, int(a.get("icon_index", 0)), 256)
                 if not png:

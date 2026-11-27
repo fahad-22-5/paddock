@@ -1,0 +1,358 @@
+{
+  "server": {
+    "port": 8765,
+    "setup_port": 8766,
+    "bind": "auto",
+    "https": true,
+    "hostname": "paddock"
+  },
+  "appearance": {
+    "accent": "#0a84ff"
+  },
+  "media": {
+    "online_art": true
+  },
+  "weather": {
+    "enabled": true,
+    "name": "",
+    "latitude": null,
+    "longitude": null,
+    "units": "celsius"
+  },
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "items": [
+        {
+          "id": "home-clock",
+          "kind": "widget",
+          "type": "clock",
+          "w": 4,
+          "h": 2
+        },
+        {
+          "id": "home-media",
+          "kind": "widget",
+          "type": "media",
+          "w": 4,
+          "h": 2
+        },
+        {
+          "id": "home-system",
+          "kind": "widget",
+          "type": "system",
+          "w": 8,
+          "h": 2
+        }
+      ]
+    },
+    {
+      "id": "media",
+      "title": "Media",
+      "items": [
+        {
+          "id": "media-player",
+          "kind": "widget",
+          "type": "media",
+          "w": 5,
+          "h": 4
+        },
+        {
+          "id": "media-volume",
+          "kind": "widget",
+          "type": "volume",
+          "w": 3,
+          "h": 4
+        }
+      ]
+    },
+    {
+      "id": "launcher",
+      "title": "Launcher",
+      "items": [
+        {
+          "id": "t-finder",
+          "kind": "action",
+          "action": "finder"
+        },
+        {
+          "id": "t-safari",
+          "kind": "action",
+          "action": "safari"
+        },
+        {
+          "id": "t-terminal",
+          "kind": "action",
+          "action": "terminal"
+        },
+        {
+          "id": "t-notes",
+          "kind": "action",
+          "action": "notes"
+        },
+        {
+          "id": "t-calculator",
+          "kind": "action",
+          "action": "calculator"
+        },
+        {
+          "id": "t-activity",
+          "kind": "action",
+          "action": "activity"
+        },
+        {
+          "id": "t-settings",
+          "kind": "action",
+          "action": "settings"
+        },
+        {
+          "id": "t-downloads",
+          "kind": "action",
+          "action": "downloads"
+        },
+        {
+          "id": "t-youtube",
+          "kind": "action",
+          "action": "youtube"
+        },
+        {
+          "id": "t-github",
+          "kind": "action",
+          "action": "github"
+        }
+      ]
+    },
+    {
+      "id": "macros",
+      "title": "Macros",
+      "items": [
+        {
+          "id": "t-teams-mute",
+          "kind": "action",
+          "action": "teams-mute"
+        },
+        {
+          "id": "t-snip",
+          "kind": "action",
+          "action": "snip"
+        },
+        {
+          "id": "t-spotlight",
+          "kind": "action",
+          "action": "spotlight"
+        },
+        {
+          "id": "t-mission-control",
+          "kind": "action",
+          "action": "mission-control"
+        },
+        {
+          "id": "t-emoji",
+          "kind": "action",
+          "action": "emoji"
+        },
+        {
+          "id": "t-copy",
+          "kind": "action",
+          "action": "copy"
+        },
+        {
+          "id": "t-paste",
+          "kind": "action",
+          "action": "paste"
+        },
+        {
+          "id": "t-play-pause-key",
+          "kind": "action",
+          "action": "play-pause-key"
+        },
+        {
+          "id": "t-signature",
+          "kind": "action",
+          "action": "signature"
+        },
+        {
+          "id": "m-clip",
+          "kind": "widget",
+          "type": "clipboard",
+          "w": 4,
+          "h": 2
+        }
+      ]
+    },
+    {
+      "id": "desk",
+      "title": "Desk",
+      "items": [
+        {
+          "id": "desk-notes",
+          "kind": "widget",
+          "type": "notes",
+          "w": 5,
+          "h": 4
+        },
+        {
+          "id": "desk-power",
+          "kind": "widget",
+          "type": "power",
+          "w": 3,
+          "h": 2
+        },
+        {
+          "id": "desk-clip",
+          "kind": "widget",
+          "type": "clipboard",
+          "w": 3,
+          "h": 2
+        }
+      ]
+    },
+    {
+      "id": "touchpad",
+      "title": "Touchpad",
+      "items": [
+        {
+          "id": "pad",
+          "kind": "widget",
+          "type": "touchpad",
+          "w": 8,
+          "h": 4
+        }
+      ]
+    }
+  ],
+  "actions": {
+    "finder": {
+      "type": "app",
+      "label": "Finder",
+      "appid": "com.apple.finder"
+    },
+    "safari": {
+      "type": "app",
+      "label": "Safari",
+      "appid": "com.apple.Safari"
+    },
+    "terminal": {
+      "type": "app",
+      "label": "Terminal",
+      "appid": "com.apple.Terminal"
+    },
+    "notes": {
+      "type": "app",
+      "label": "Notes",
+      "appid": "com.apple.Notes"
+    },
+    "calculator": {
+      "type": "app",
+      "label": "Calculator",
+      "appid": "com.apple.calculator"
+    },
+    "activity": {
+      "type": "app",
+      "label": "Activity Monitor",
+      "appid": "com.apple.ActivityMonitor"
+    },
+    "settings": {
+      "type": "app",
+      "label": "System Settings",
+      "appid": "com.apple.systempreferences"
+    },
+    "downloads": {
+      "type": "folder",
+      "label": "Downloads",
+      "path": "~/Downloads"
+    },
+    "youtube": {
+      "type": "url",
+      "label": "YouTube",
+      "url": "https://www.youtube.com",
+      "icon": "▶️",
+      "color": "#ff0033"
+    },
+    "github": {
+      "type": "url",
+      "label": "GitHub",
+      "url": "https://github.com",
+      "icon": "🐙",
+      "color": "#24292f"
+    },
+    "teams-mute": {
+      "type": "keys",
+      "label": "Mute Teams",
+      "keys": "cmd+shift+m",
+      "icon": "🎙️",
+      "color": "#5b5fc7"
+    },
+    "snip": {
+      "type": "keys",
+      "label": "Screenshot",
+      "keys": "cmd+shift+4",
+      "icon": "✂️"
+    },
+    "spotlight": {
+      "type": "keys",
+      "label": "Spotlight",
+      "keys": "cmd+space",
+      "icon": "🔍"
+    },
+    "mission-control": {
+      "type": "keys",
+      "label": "Mission Control",
+      "keys": "ctrl+up",
+      "icon": "🗂️"
+    },
+    "emoji": {
+      "type": "keys",
+      "label": "Emoji",
+      "keys": "ctrl+cmd+space",
+      "icon": "😀"
+    },
+    "copy": {
+      "type": "keys",
+      "label": "Copy",
+      "keys": "cmd+c",
+      "icon": "📋"
+    },
+    "paste": {
+      "type": "keys",
+      "label": "Paste",
+      "keys": "cmd+v",
+      "icon": "📥"
+    },
+    "play-pause-key": {
+      "type": "keys",
+      "label": "Play / Pause",
+      "keys": "media_play_pause",
+      "icon": "⏯️"
+    },
+    "signature": {
+      "type": "text",
+      "label": "Signature",
+      "text": "Best regards,\nYour Name",
+      "icon": "✍️"
+    },
+    "open-textedit-macro": {
+      "type": "steps",
+      "label": "TextEdit via Spotlight",
+      "icon": "📝",
+      "steps": [
+        {
+          "keys": "cmd+space"
+        },
+        {
+          "delay": 0.5
+        },
+        {
+          "text": "TextEdit"
+        },
+        {
+          "delay": 0.3
+        },
+        {
+          "keys": "enter"
+        }
+      ]
+    }
+  }
+}

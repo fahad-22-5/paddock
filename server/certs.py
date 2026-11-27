@@ -99,7 +99,7 @@ def ensure_certs(ips: list[str], extra_names: list[str] | tuple = ()) -> tuple[P
     """Make sure a valid server certificate exists. Returns (certfile, keyfile)."""
     CERT_DIR.mkdir(parents=True, exist_ok=True)
     ca_key, ca_cert = _ensure_ca()
-    host = socket.gethostname()
+    host = socket.gethostname().removesuffix(".local")
     names = sorted({"localhost", host, f"{host}.local", f"{host}.lan", *extra_names})
     ips = sorted(set(ips) | {"127.0.0.1"})
     if _leaf_is_good(ips, names, ca_cert):

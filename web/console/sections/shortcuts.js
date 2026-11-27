@@ -3,7 +3,7 @@
 import { h, icon } from '/ui/js/core/dom.js';
 import { confirmDialog, sheet, toast, toastError } from '/ui/js/core/ui.js';
 import { api, apiImage, forgetImages, store } from '../api.js';
-import { TYPES, art, detail, head, usage } from './common.js';
+import { TYPES, art, detail, head, isMac, usage } from './common.js';
 
 let query = '';
 let filter = 'all';
@@ -149,30 +149,30 @@ export function openEditor(editId = null, preset = null) {
     form.append(field('Label', labelInput));
 
     if (s.type === 'exe') {
-      const p = input('path', { placeholder: 'C:\\Program Files\\App\\app.exe or any file' });
+      const p = input('path', { placeholder: isMac() ? '/Applications/App.app or any file' : 'C:\\Program Files\\App\\app.exe or any file' });
       form.append(field('Program or file', h('div', { class: 'c-row' }, h('div', { class: 'c-grow' }, p), browse('path', 'file', p)),
         'A program, a shortcut (.lnk), a script, or any document: it opens with its default app.'));
       form.append(field('Arguments', input('args', { placeholder: 'Optional, e.g. --new-window' })));
       const cwd = input('cwd', { placeholder: 'Optional; defaults to the program’s folder' });
       form.append(field('Start in', h('div', { class: 'c-row' }, h('div', { class: 'c-grow' }, cwd), browse('cwd', 'folder', cwd, false))));
-      form.append(check('admin', 'Run as administrator (Windows asks for confirmation on the PC)'));
+      form.append(check('admin', isMac() ? 'Run with administrator rights (asks for your password on the Mac)' : 'Run as administrator (Windows asks for confirmation on the PC)'));
     } else if (s.type === 'app') {
-      form.append(field('App', input('appid', { placeholder: 'App id' }), 'Started the way the Start menu starts it.'));
+      form.append(field('App', input('appid', { placeholder: 'App id' }), isMac() ? 'A bundle id like com.apple.Safari, or the path to an .app.' : 'Started the way the Start menu starts it.'));
     } else if (s.type === 'folder') {
-      const p = input('path', { placeholder: 'C:\\Users\\you\\Documents' });
+      const p = input('path', { placeholder: isMac() ? '~/Documents' : 'C:\\Users\\you\\Documents' });
       form.append(field('Folder', h('div', { class: 'c-row' }, h('div', { class: 'c-grow' }, p), browse('path', 'folder', p)),
-        'Opens in File Explorer on the PC. %USERPROFILE% and other variables work.'));
+        isMac() ? 'Opens in Finder. ~ means your home folder.' : 'Opens in File Explorer on the PC. %USERPROFILE% and other variables work.'));
     } else if (s.type === 'url') {
       form.append(field('Link', input('url', { placeholder: 'https://… or spotify:, ms-settings:, steam://…' }), 'Opens on the PC with its default app.'));
     } else if (s.type === 'shell') {
-      form.append(field('Command', input('command', { rows: 3, placeholder: 'ipconfig /flushdns' }), 'Runs with cmd.exe.'));
+      form.append(field('Command', input('command', { rows: 3, placeholder: isMac() ? 'dscacheutil -flushcache' : 'ipconfig /flushdns' }), isMac() ? 'Runs with zsh.' : 'Runs with cmd.exe.'));
       const cwd = input('cwd', { placeholder: 'Optional' });
       form.append(field('Start in', h('div', { class: 'c-row' }, h('div', { class: 'c-grow' }, cwd), browse('cwd', 'folder', cwd, false))));
       form.append(check('window', 'Show a console window (otherwise it runs hidden)'));
     } else if (s.type === 'keys') {
       const k = input('keys', { placeholder: 'ctrl+shift+m' });
       form.append(field('Keys', h('div', { class: 'c-row' }, h('div', { class: 'c-grow' }, k), recordButton(k, (v) => { s.keys = v; drawPreview(); })),
-        'Click Record and press the shortcut. Or type it: ctrl, shift, alt, win + a key. Several in a row: “ctrl+k ctrl+c”.'));
+        `Click Record and press the shortcut. Or type it: ctrl, shift, alt, ${isMac() ? 'cmd' : 'win'} + a key. Several in a row: “ctrl+k ctrl+c”.`));
     } else if (s.type === 'text') {
       form.append(field('Text', input('text', { rows: 5, placeholder: 'Typed into the focused window on the PC' })));
     } else if (s.type === 'steps') {
@@ -233,7 +233,9 @@ export function openEditor(editId = null, preset = null) {
   }
 
   function stepsEditor() {
-    s.steps ||= [{ keys: 'win+r' }, { delay: 0.5 }, { text: 'notepad' }, { keys: 'enter' }];
+    s.steps ||= isMac()
+      ? [{ keys: 'cmd+space' }, { delay: 0.5 }, { text: 'TextEdit' }, { keys: 'enter' }]
+      : [{ keys: 'win+r' }, { delay: 0.5 }, { text: 'notepad' }, { keys: 'enter' }];
     const wrap = h('div', { class: 'c-steps' });
     const draw = () => {
       wrap.replaceChildren(...s.steps.map((st, i) => {
@@ -295,7 +297,7 @@ function recordButton(input, onValue) {
     e.stopPropagation();
     const name = codeName(e.code);
     if (!name) { toast(`That key (${e.code}) can’t be recorded; type it instead.`); stop(); return; }
-    const combo = [e.ctrlKey && 'ctrl', e.shiftKey && 'shift', e.altKey && 'alt', e.metaKey && 'win', name].filter(Boolean).join('+');
+    const combo = [e.ctrlKey && 'ctrl', e.shiftKey && 'shift', e.altKey && 'alt', e.metaKey && (isMac() ? 'cmd' : 'win'), name].filter(Boolean).join('+');
     input.value = combo;
     onValue(combo);
     stop();
@@ -321,7 +323,7 @@ function openAppPicker() {
   const pageSel = h('select', null, h('option', { value: '' }, 'Don’t add tiles'),
     data.config.pages.map((p) => h('option', { value: p.id, selected: p.id === page }, `Add tiles to “${p.title}”`)));
   pageSel.onchange = () => { page = pageSel.value; };
-  const list = h('div', { class: 'c-applist' }, h('div', { class: 'c-muted' }, 'Reading the Start menu…'));
+  const list = h('div', { class: 'c-applist' }, h('div', { class: 'c-muted' }, isMac() ? 'Reading your Applications folders…' : 'Reading the Start menu…'));
 
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) {

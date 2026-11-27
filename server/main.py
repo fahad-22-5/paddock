@@ -22,6 +22,7 @@ from .hub import Hub
 from .modules import MODULES
 from .modules.base import Context
 from .netutil import all_lan_ips, primary_lan_ip
+from .platform import IS_MAC, NAME as PLATFORM, message_box
 from .paths import FROZEN, LOG_PATH, SOURCE_HINT, USER_DIR, ensure_dirs
 from .security import DeviceStore, Pairing
 from .setup_site import create_setup_app
@@ -169,7 +170,7 @@ class PadDock:
         self.devices._revoke_listeners.clear()
         hub = Hub()
         ctx = Context(hub=hub, config=self.config, devices=self.devices, pairing=self.pairing)
-        ctx.info = {"name": socket.gethostname(), "version": __version__}
+        ctx.info = {"name": socket.gethostname().removesuffix(".local"), "version": __version__, "platform": PLATFORM}
         self.ctx = ctx
         modules = [cls(ctx) for cls in MODULES]
         app = create_app(ctx, modules)
@@ -229,18 +230,57 @@ class PadDock:
         print("  Press Ctrl+C to stop.\n", flush=True)
 
     def serve_forever(self) -> None:
-        signal.signal(signal.SIGINT, lambda *a: self.quit())
+        import threading
+
+        if threading.current_thread() is threading.main_thread():
+            signal.signal(signal.SIGINT, lambda *a: self.quit())
         while True:
             restart = asyncio.run(self.run_once())
             if not restart:
                 break
 
 
-def _message(text: str, error: bool = False) -> None:
-    """A Windows message box (the installed app has no console window to print to)."""
-    import ctypes
+def _run_with_menu_bar_icon(dock: "PadDock", no_console: bool) -> None:
+    """macOS: the menu bar icon needs the main thread, so the server runs on another one."""
+    import threading
 
-    ctypes.windll.user32.MessageBoxW(None, text, "PadDock", 0x10 if error else 0x40)
+    from .tray import build_icon
+
+    icon = build_icon(dock.get_state, dock.quit)
+    problem: dict = {}
+
+    def serve():
+        try:
+            dock.serve_forever()
+        except SystemExit as e:
+            problem["text"] = e.code if isinstance(e.code, str) else None
+        except Exception:
+            log.exception("PadDock stopped because of an error")
+            problem["text"] = f"PadDock stopped because of an error. Details are in\n{LOG_PATH}"
+        finally:
+            if icon is not None:
+                with contextlib.suppress(Exception):
+                    icon.stop()
+
+    server = threading.Thread(target=serve, name="server", daemon=True)
+    server.start()
+    if icon is None:
+        server.join()
+    else:
+        try:
+            icon.run()  # blocks until "Quit PadDock" or the server stops
+        except Exception:
+            log.exception("The menu bar icon couldn't start; PadDock keeps running without it")
+            server.join()
+        dock.quit()
+        server.join(timeout=10)
+    if problem.get("text") and no_console:
+        _message(problem["text"].strip(), error=True)
+
+
+def _message(text: str, error: bool = False) -> None:
+    """A dialog box (the installed app has no console window to print to)."""
+    message_box(text, error)
 
 
 def _running_instance_port() -> int | None:
@@ -327,6 +367,9 @@ def main() -> None:
 
         port = int(dock.config.get("server")["setup_port"])
         threading.Timer(2.5, lambda: webbrowser.open(console_url(port))).start()
+    if args.tray and IS_MAC:
+        _run_with_menu_bar_icon(dock, no_console)
+        return
     if args.tray:
         from .tray import start_tray
 

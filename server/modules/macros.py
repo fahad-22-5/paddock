@@ -31,24 +31,31 @@ def keyboard():
     return _kb
 
 
+# Names you can use in shortcuts -> pynput Key attribute. Some keys only exist on some
+# systems (a Mac has no Insert, Print Screen, Pause, Num Lock, Scroll Lock or Menu key), so
+# names whose key isn't available here are simply left out.
+KEY_NAMES = {
+    "ctrl": "ctrl", "control": "ctrl", "shift": "shift", "alt": "alt", "option": "alt", "opt": "alt",
+    "altgr": "alt_gr",
+    "win": "cmd", "cmd": "cmd", "command": "cmd", "super": "cmd", "meta": "cmd", "windows": "cmd",
+    "enter": "enter", "return": "enter", "esc": "esc", "escape": "esc", "tab": "tab", "space": "space",
+    "backspace": "backspace", "delete": "delete", "del": "delete", "insert": "insert", "ins": "insert",
+    "home": "home", "end": "end", "pageup": "page_up", "pgup": "page_up", "pagedown": "page_down", "pgdn": "page_down",
+    "up": "up", "down": "down", "left": "left", "right": "right",
+    "capslock": "caps_lock", "numlock": "num_lock", "scrolllock": "scroll_lock", "pause": "pause",
+    "printscreen": "print_screen", "prtsc": "print_screen", "menu": "menu",
+    "media_play_pause": "media_play_pause", "playpause": "media_play_pause", "media_next": "media_next",
+    "media_previous": "media_previous", "media_prev": "media_previous",
+    "volume_up": "media_volume_up", "volume_down": "media_volume_down", "volume_mute": "media_volume_mute",
+    "media_volume_up": "media_volume_up", "media_volume_down": "media_volume_down", "media_volume_mute": "media_volume_mute",
+}
+
+
 def _key_table():
     from pynput.keyboard import Key, KeyCode
 
-    t = {
-        "ctrl": Key.ctrl, "control": Key.ctrl, "shift": Key.shift, "alt": Key.alt, "altgr": Key.alt_gr,
-        "win": Key.cmd, "cmd": Key.cmd, "super": Key.cmd, "meta": Key.cmd, "windows": Key.cmd,
-        "enter": Key.enter, "return": Key.enter, "esc": Key.esc, "escape": Key.esc, "tab": Key.tab, "space": Key.space,
-        "backspace": Key.backspace, "delete": Key.delete, "del": Key.delete, "insert": Key.insert, "ins": Key.insert,
-        "home": Key.home, "end": Key.end, "pageup": Key.page_up, "pgup": Key.page_up, "pagedown": Key.page_down, "pgdn": Key.page_down,
-        "up": Key.up, "down": Key.down, "left": Key.left, "right": Key.right,
-        "capslock": Key.caps_lock, "numlock": Key.num_lock, "scrolllock": Key.scroll_lock, "pause": Key.pause,
-        "printscreen": Key.print_screen, "prtsc": Key.print_screen, "menu": Key.menu,
-        "media_play_pause": Key.media_play_pause, "playpause": Key.media_play_pause, "media_next": Key.media_next,
-        "media_previous": Key.media_previous, "media_prev": Key.media_previous,
-        "volume_up": Key.media_volume_up, "volume_down": Key.media_volume_down, "volume_mute": Key.media_volume_mute,
-        "media_volume_up": Key.media_volume_up, "media_volume_down": Key.media_volume_down, "media_volume_mute": Key.media_volume_mute,
-        "plus": KeyCode.from_char("+"), "minus": KeyCode.from_char("-"),
-    }
+    t = {name: getattr(Key, attr) for name, attr in KEY_NAMES.items() if hasattr(Key, attr)}
+    t.update(plus=KeyCode.from_char("+"), minus=KeyCode.from_char("-"))
     if sys.platform == "win32":
         for n in range(1, 25):
             t[f"f{n}"] = KeyCode.from_vk(0x70 + n - 1)
@@ -56,8 +63,12 @@ def _key_table():
         for n in range(1, 21):
             if hasattr(Key, f"f{n}"):
                 t[f"f{n}"] = getattr(Key, f"f{n}")
-        t.update(option=Key.alt, opt=Key.alt, command=Key.cmd)
     return t
+
+
+def unavailable_key(name: str) -> bool:
+    """A known key name that this system's keyboard doesn't have (e.g. insert on a Mac)."""
+    return name in KEY_NAMES and name not in (_TABLE or {})
 
 
 _TABLE = None
@@ -84,6 +95,8 @@ def parse_combo(combo: str):
             keys.append(KeyCode.from_vk(ord(p.upper())) if sys.platform == "win32" else KeyCode.from_char(p))
         elif len(p) == 1:
             keys.append(KeyCode.from_char(p))
+        elif p in KEY_NAMES:
+            raise ActionError(f"This computer's keyboard has no “{p}” key.")
         else:
             raise ActionError(f"Unknown key “{p}”.")
     return keys

@@ -40,6 +40,8 @@ jobs:
         if: always()
         run: |
           { echo '### macOS report'; echo '```'; tail -c 60000 report.txt 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          # Also as annotations, which show on the run page without opening the logs.
+          python tools/ci_report.py report.txt
 
   windows:
     name: Windows app
@@ -71,3 +73,5 @@ jobs:
         if: always()
         run: |
           { echo '### Windows report'; echo '```'; tail -c 60000 report.txt 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          # Also as annotations, which show on the run page without opening the logs.
+          python tools/ci_report.py report.txt

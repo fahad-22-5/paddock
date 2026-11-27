@@ -377,6 +377,40 @@ def test_mac_macros_keymap():
         macros._TABLE = None
 
 
+def test_mac_keyboard_without_pc_keys():
+    """pynput on macOS has no insert/print_screen/pause/num_lock/scroll_lock/menu keys.
+    The key table must still build, and those names must give a clear error."""
+    import pynput.keyboard as real_kb
+
+    from server.modules import macros
+
+    mac_keys = ["ctrl", "shift", "alt", "alt_gr", "cmd", "enter", "esc", "tab", "space", "backspace", "delete",
+                "home", "end", "page_up", "page_down", "up", "down", "left", "right", "caps_lock",
+                "media_play_pause", "media_next", "media_previous", "media_volume_up", "media_volume_down",
+                "media_volume_mute"] + [f"f{n}" for n in range(1, 21)]
+    FakeKey = types.SimpleNamespace(**{k: f"Key.{k}" for k in mac_keys})
+    fake_module = types.SimpleNamespace(Key=FakeKey, KeyCode=real_kb.KeyCode)
+    saved = sys.modules["pynput.keyboard"]
+    sys.modules["pynput.keyboard"] = fake_module
+    real_sys = macros.sys
+    macros.sys = types.SimpleNamespace(platform="darwin")
+    macros._TABLE = None
+    try:
+        assert macros.parse_combo("cmd+shift+4")[0] == "Key.cmd"
+        assert macros.parse_combo("ctrl+cmd+q")[1] == "Key.cmd"
+        assert macros.parse_combo("media_play_pause") == ["Key.media_play_pause"]
+        for missing in ("insert", "printscreen", "pause"):
+            try:
+                macros.parse_combo(missing)
+                raise AssertionError(f"{missing} should be refused on a Mac")
+            except ActionError as e:
+                assert "has no" in str(e), e
+    finally:
+        sys.modules["pynput.keyboard"] = saved
+        macros.sys = real_sys
+        macros._TABLE = None
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     failed = 0
